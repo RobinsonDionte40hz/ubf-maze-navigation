@@ -1,0 +1,23 @@
+# Universal Behavioral Framework (UBF) - Dependencies
+
+# Core Framework - NO EXTERNAL DEPENDENCIES REQUIRED
+# The core UBF system uses only Python standard library:
+# - dataclasses
+# - enum
+# - typing
+# - random
+# - math
+# - json
+# - time
+# - os
+# - sys
+
+# Optional: 2D Matplotlib Visualization
+# Only needed if you want to use visualize_2d.py
+# The ASCII visualization (visualize_ascii.py) works without these
+matplotlib>=3.5.0
+numpy>=1.21.0
+
+# Development/Testing (optional)
+# pytest>=7.0.0
+# pytest-cov>=3.0.0
