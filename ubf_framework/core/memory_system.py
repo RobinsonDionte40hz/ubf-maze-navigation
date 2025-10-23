@@ -152,7 +152,7 @@ class MemoryManager:
     """
     
     MAX_MEMORIES_PER_AGENT = 50
-    MIN_SIGNIFICANCE_THRESHOLD = 0.15  # Lowered to remember more experiences
+    MIN_SIGNIFICANCE_THRESHOLD = 0.15  # Minimum significance to form memory
     
     def __init__(self):
         self.memories: List[Memory] = []

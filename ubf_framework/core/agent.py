@@ -159,7 +159,7 @@ class Agent:
         stuck_count = environment_context.get('stuck_count', 0)
         near_start = (abs(self.position[0] - 1) <= 2 and abs(self.position[1] - 1) <= 2)
         
-        if stuck_count > 5 and near_start:
+        if stuck_count > 3 and near_start:  # Changed from 5 to 3 for earlier intervention
             # Force forward movement to break out of spawn spiral
             for i, action in enumerate(actions):
                 if action.action_type == ActionType.MOVE_FORWARD:
@@ -339,26 +339,6 @@ class Agent:
             }
         )
         
-        # Boost goal_relevance AND novelty for successful forward movement into new areas
-        if (self.last_action.action_type == ActionType.MOVE_FORWARD and 
-            action_result['outcome'] == 'success'):
-            event_data.goal_relevance = max(0.7, event_data.goal_relevance)
-            if action_result.get('new_information', False):
-                event_data.novelty_factor = max(0.8, event_data.novelty_factor)  # Very novel!
-            
-            # Track successful path
-            self.current_path.append((self.position, self.orientation, 'forward'))
-            
-            # Check if this is progress toward goal (from environment context)
-            current_distance = action_result.get('context', {}).get('distance_to_goal', 9999)
-            if current_distance < self.best_distance_to_goal:
-                # NEW BEST! Reinforce entire path so far
-                self.best_distance_to_goal = current_distance
-                self.best_path_positions = set(pos for pos, _, _ in self.current_path)
-                
-                # Boost emotional impact for moves on the best path
-                event_data.emotional_impact = min(1.0, event_data.emotional_impact * 1.5)
-        
         # Process event and update consciousness if significant
         was_updated, new_behavioral_state = self.update_service.process_event(
             consciousness=self.consciousness,
@@ -400,8 +380,10 @@ class Agent:
             return
         
         # Get the most recent memory that was just created (if any)
+        # Look for memories at the location where the event occurred
+        event_location = event_data.location if event_data.location else f"pos_{self.position}"
         recent_memories = [m for m in self.memory_manager.memories 
-                          if m.location == f"pos_{self.position}"]
+                          if m.location == event_location]
         
         if not recent_memories:
             return

@@ -349,8 +349,8 @@ class MazeEnvironment:
                 # Invalid move (hit wall) - STRONG penalty so they learn!
                 result.update({
                     'outcome': 'collision',
-                    'reward': -0.5,  # Stronger penalty (was -0.1)
-                    'surprise': 0.8  # High surprise (was 0.3)
+                    'reward': -0.5,  # Increased from -0.1 to -0.5 for stronger learning
+                    'surprise': 0.8  # Increased from 0.3 to 0.8 for high surprise
                 })
         
         elif action_type == ActionType.TURN_LEFT:
@@ -358,7 +358,7 @@ class MazeEnvironment:
             result.update({
                 'success': True,
                 'outcome': 'success',
-                'reward': -0.05  # Penalty for turning (was -0.005)
+                'reward': -0.05  # Increased from -0.005 to make turning expensive
             })
         
         elif action_type == ActionType.TURN_RIGHT:
@@ -366,7 +366,7 @@ class MazeEnvironment:
             result.update({
                 'success': True,
                 'outcome': 'success',
-                'reward': -0.05  # Penalty for turning (was -0.005)
+                'reward': -0.05  # Increased from -0.005 to make turning expensive
             })
         
         elif action_type == ActionType.INVESTIGATE:

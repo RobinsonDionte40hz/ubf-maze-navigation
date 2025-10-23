@@ -149,17 +149,7 @@ class ConsciousnessUpdateService:
                      consciousness: ConsciousnessState,
                      memory_manager: MemoryManager,
                      event_data: EventData) -> Tuple[bool, Optional[BehavioralState]]:
-        """
-        Process an event and update consciousness if significant enough.
         
-        Args:
-            consciousness: Current consciousness state
-            memory_manager: Memory system for storing significant events
-            event_data: Event data structure
-            
-        Returns:
-            Tuple of (was_updated, new_behavioral_state_if_updated)
-        """
         # Create memory context
         context = MemoryContext(
             goal_relevance=event_data.goal_relevance,
@@ -308,7 +298,7 @@ class ConsciousnessUpdateService:
             else:
                 event_type = EventType.ROUTINE_SUCCESS
         
-        elif outcome == "failure":
+        elif outcome == "failure" or outcome == "collision":
             if interaction_type == InteractionType.EXPLORATION:
                 event_type = EventType.EXPLORATION_FAILURE
             elif interaction_type == InteractionType.SOCIAL:
