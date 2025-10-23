@@ -176,7 +176,7 @@ class Agent:
         factor_contributions = {}
         
         for i, action in enumerate(actions):
-            weight = self.decision_system.calculate_interaction_weight(
+            weight, factors = self.decision_system.calculate_interaction_weight(
                 consciousness=self.consciousness,
                 behavioral_state=self.behavioral_state,
                 memory_manager=self.memory_manager,
@@ -184,6 +184,9 @@ class Agent:
                 environmental_context=environment_context,
                 collective_memory=self.collective_memory  # Pass collective memory
             )
+            
+            # Store factor contributions for this action
+            factor_contributions[action.action_type.value] = factors
             
             # DIRECT WALL AVOIDANCE - if we know there's a wall, heavily penalize!
             if action.action_type == ActionType.MOVE_FORWARD:
@@ -290,7 +293,9 @@ class Agent:
         Args:
             action_result: Result from action execution
         """
+        
         if self.last_action is None:
+            print(f"DEBUG AGENT: No last_action set, skipping")
             return  # No action to process
         
         # Calculate target position for forward movement (for collision memories)

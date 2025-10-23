@@ -150,6 +150,10 @@ class ConsciousnessUpdateService:
                      memory_manager: MemoryManager,
                      event_data: EventData) -> Tuple[bool, Optional[BehavioralState]]:
         
+        # TEMP DEBUG: Check if events are being processed
+        if event_data.significance > 0.1:  # Only log significant events
+            pass  # Removed debug print
+        
         # Create memory context
         context = MemoryContext(
             goal_relevance=event_data.goal_relevance,
@@ -164,7 +168,7 @@ class ConsciousnessUpdateService:
         if event_data.significance == 0.0:
             event_dict = {
                 'emotional_impact': event_data.emotional_impact,
-                'interaction_type': event_data.interaction_type.value,
+                'interaction_type': event_data.interaction_type.value if hasattr(event_data.interaction_type, 'value') else event_data.interaction_type,
                 'outcome': event_data.outcome,
                 'participants': event_data.participants,
                 'context_tags': event_data.context_tags,
@@ -203,7 +207,7 @@ class ConsciousnessUpdateService:
         # Create memory of this significant event
         memory_event = {
             'emotional_impact': event_data.emotional_impact,
-            'interaction_type': event_data.interaction_type.value,
+            'interaction_type': event_data.interaction_type.value if hasattr(event_data.interaction_type, 'value') else event_data.interaction_type,
             'outcome': event_data.outcome,
             'participants': event_data.participants,
             'context_tags': event_data.context_tags,

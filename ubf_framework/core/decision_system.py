@@ -83,7 +83,7 @@ class DecisionSystem:
                                    memory_manager: MemoryManager,
                                    action: Action,
                                    environmental_context: Dict[str, Any] = None,
-                                   collective_memory: 'CollectiveMemoryPool' = None) -> float:
+                                   collective_memory: 'CollectiveMemoryPool' = None) -> Tuple[float, Dict[str, float]]:
         """
         Calculate the complete interaction weight using all 13 factors.
         
@@ -96,28 +96,33 @@ class DecisionSystem:
             collective_memory: Optional collective memory pool for group learning
             
         Returns:
-            Final weighted score for this action
+            Tuple of (final_weight, factor_contributions_dict)
         """
         if environmental_context is None:
             environmental_context = {}
         
         weight = action.base_weight
+        factors = {}  # Track factor contributions
         
         # Factor 1: Goal alignment (+10.0 dominant boost)
         goal_factor = self._calculate_goal_priority(action, environmental_context)
         weight += goal_factor
+        factors['goal_alignment'] = goal_factor
         
         # Factor 2: Critical needs (+8.0 for survival)
         needs_factor = self._calculate_critical_needs(behavioral_state, action)
         weight += needs_factor
+        factors['critical_needs'] = needs_factor
         
         # Factor 3: Environmental suitability (0.1x-3.0x)
         env_factor = self._calculate_environmental_suitability(action, environmental_context)
         weight *= env_factor
+        factors['environmental_suitability'] = env_factor
         
         # Factor 4: Personality influence (+2.0)
         personality_factor = self._calculate_personality_influence(behavioral_state, action)
         weight += personality_factor
+        factors['personality_influence'] = personality_factor
         
         # Factor 5: MEMORY INFLUENCE (0.3x-2.5x multiplier) - CRITICAL FOR LEARNING!
         # For MOVE_FORWARD, check memories at the TARGET location + direction
@@ -169,6 +174,7 @@ class DecisionSystem:
             tags=memory_tags if memory_tags else None
         )
         weight *= memory_factor
+        factors['memory_influence'] = memory_factor
         
         # COLLECTIVE MEMORY INFLUENCE (Factor 5b: group learning)
         # If collective memory available, also consider what the group has learned
@@ -180,45 +186,57 @@ class DecisionSystem:
             )
             # Weight collective memories slightly less than personal (0.7x strength)
             weight *= (1.0 + (collective_factor - 1.0) * 0.7)
+            factors['collective_memory'] = collective_factor
+        else:
+            factors['collective_memory'] = 1.0
         
         # Factor 6: Emotional state (0.1x-3.0x)
         emotional_factor = self._calculate_emotional_influence(behavioral_state, action)
         weight *= emotional_factor
+        factors['emotional_state'] = emotional_factor
         
         # Factor 7: Resource constraints (0.0x-1.0x)
         resource_factor = self._calculate_resource_constraints(behavioral_state, action)
         weight *= resource_factor
+        factors['resource_constraints'] = resource_factor
         
         # Factor 8: Social dynamics (+1.5)
         social_factor = self._calculate_social_dynamics(behavioral_state, action, environmental_context)
         weight += social_factor
+        factors['social_dynamics'] = social_factor
         
         # Factor 9: Learning opportunities (+1.0)
         learning_factor = self._calculate_learning_opportunities(action, environmental_context)
         weight += learning_factor
+        factors['learning_opportunities'] = learning_factor
         
         # Factor 10: Risk assessment (-2.0 to +2.0)
         risk_factor = self._calculate_risk_assessment(behavioral_state, action)
         weight += risk_factor
+        factors['risk_assessment'] = risk_factor
         
         # Factor 11: Consciousness modifier (behavioral state influence)
         consciousness_factor = self._calculate_consciousness_modifier(
             consciousness, behavioral_state, action)
         weight *= consciousness_factor
+        factors['consciousness_modifier'] = consciousness_factor
         
         # Factor 12: Temporal factors (+0.5)
         temporal_factor = self._calculate_temporal_factors(action, environmental_context)
         weight += temporal_factor
+        factors['temporal_factors'] = temporal_factor
         
         # Factor 13: Quantum resonance (quantum coherence-based)
         resonance_factor = self._calculate_quantum_resonance(consciousness, action)
         weight *= resonance_factor
+        factors['quantum_resonance'] = resonance_factor
         
         # Add Gaussian noise for creativity
         noise = random.gauss(0, self.noise_std)
         weight += noise
+        factors['noise'] = noise
         
-        return max(0.01, weight)  # Ensure positive weight
+        return max(0.01, weight), factors  # Ensure positive weight
     
     def _calculate_goal_priority(self, action: Action, context: Dict[str, Any]) -> float:
         """Factor 1: Goal alignment (dominant boost up to +10.0)."""

@@ -523,6 +523,194 @@ class UBFTestScenarios:
             json.dump(self.results, f, indent=2)
         print(f"Results saved to {filepath}")
     
+    def generate_summary_document(self, filepath: str = None) -> str:
+        """
+        Generate a human-readable summary document of the test results.
+        
+        Args:
+            filepath: Optional file path to save the summary (defaults to timestamped name)
+            
+        Returns:
+            Summary document content as string
+        """
+        if not filepath:
+            timestamp = time.strftime("%Y%m%d_%H%M%S")
+            filepath = f"ubf_summary_{timestamp}.md"
+        
+        summary_lines = []
+        summary_lines.append("# Universal Behavioral Framework (UBF) - Test Summary")
+        summary_lines.append("")
+        summary_lines.append(f"**Generated:** {time.strftime('%Y-%m-%d %H:%M:%S')}")
+        summary_lines.append(f"**Maze Size:** {self.maze_width}x{self.maze_height}")
+        summary_lines.append(f"**Max Steps:** {self.max_steps}")
+        if self.results['metadata']['random_seed']:
+            summary_lines.append(f"**Random Seed:** {self.results['metadata']['random_seed']}")
+        summary_lines.append("")
+        
+        # Overall Performance Summary
+        summary_lines.append("## Overall Performance Summary")
+        summary_lines.append("")
+        
+        analysis = self.results.get('analysis', {})
+        perf_comp = analysis.get('performance_comparison', {})
+        
+        if perf_comp:
+            summary_lines.append("| Scenario | Success Rate | Avg Steps | Status |")
+            summary_lines.append("|----------|-------------|-----------|--------|")
+            
+            for scenario, metrics in perf_comp.items():
+                rate = metrics.get('completion_rate', 0)
+                steps = metrics.get('average_steps', 0)
+                status = "✅ PASS" if rate > 0 else "❌ FAIL"
+                summary_lines.append(f"| {scenario.replace('_', ' ').title()} | {rate:.1%} | {steps:.0f} | {status} |")
+            summary_lines.append("")
+        
+        # Detailed Scenario Results
+        summary_lines.append("## Detailed Scenario Results")
+        summary_lines.append("")
+        
+        # Solo Phase
+        if self.results['solo_phase']:
+            summary_lines.append("### Solo Phase (3 Runs)")
+            summary_lines.append("")
+            summary_lines.append("| Run | Success | Steps | Time | Consciousness Evolution |")
+            summary_lines.append("|-----|---------|-------|------|-------------------------|")
+            
+            for run in self.results['solo_phase']:
+                metrics = run['simulation_metrics']
+                success = "✅" if metrics['completion_rate'] > 0 else "❌"
+                steps = metrics['total_steps']
+                time_taken = f"{metrics['simulation_time']:.1f}s"
+                
+                # Get consciousness evolution for first agent
+                agent_id = list(run['agent_details'].keys())[0]
+                initial = run['initial_states'][agent_id]['consciousness']
+                final = run['final_states'][agent_id]['consciousness']
+                evolution = f"{initial['frequency']:.1f}Hz/{initial['coherence']:.2f} → {final['frequency']:.1f}Hz/{final['coherence']:.2f}"
+                
+                summary_lines.append(f"| {run['run_number']} | {success} | {steps} | {time_taken} | {evolution} |")
+            summary_lines.append("")
+        
+        # Group Scenarios
+        for group_name, group_key in [("Experienced + New Agents", "group_1"), ("All New Agents", "group_2")]:
+            if group_key in self.results and self.results[group_key]:
+                group_data = self.results[group_key]
+                summary_lines.append(f"### {group_name}")
+                summary_lines.append("")
+                
+                metrics = group_data['simulation_metrics']
+                summary_lines.append(f"- **Success Rate:** {metrics['completion_rate']:.1%}")
+                summary_lines.append(f"- **Total Steps:** {metrics['total_steps']}")
+                summary_lines.append(f"- **Agents Completed:** {metrics['agents_completed']}/{len(group_data['agent_details'])}")
+                summary_lines.append("")
+                
+                summary_lines.append("| Agent | Status | Steps | Final Position |")
+                summary_lines.append("|-------|--------|-------|----------------|")
+                
+                for agent_id, agent_data in group_data['agent_details'].items():
+                    status = "✅ SUCCESS" if agent_data['final_status']['goal_achieved'] else "❌ INCOMPLETE"
+                    steps = agent_data['final_status']['step_count']
+                    position = agent_data['final_status']['position']
+                    summary_lines.append(f"| {agent_id} | {status} | {steps} | {position} |")
+                summary_lines.append("")
+        
+        # Learning Analysis
+        if analysis:
+            summary_lines.append("## Learning Analysis")
+            summary_lines.append("")
+            
+            # Learning Progression
+            learning = analysis.get('learning_progression', {})
+            if learning:
+                summary_lines.append("### Learning Progression")
+                summary_lines.append("")
+                improvement = learning.get('time_improvement_pct', 0)
+                trend = learning.get('learning_trend', 'unknown')
+                summary_lines.append(f"- **Time Improvement:** {improvement:+.1f}%")
+                summary_lines.append(f"- **Learning Trend:** {trend.title()}")
+                summary_lines.append("")
+            
+            # Memory Patterns
+            memory = analysis.get('memory_patterns', {})
+            if memory:
+                summary_lines.append("### Memory Formation")
+                summary_lines.append("")
+                total_memories = memory.get('total_memories_formed', 0)
+                avg_sig = memory.get('average_significance', 0)
+                agents_with_memories = memory.get('agents_with_memories', 0)
+                summary_lines.append(f"- **Total Memories:** {total_memories}")
+                summary_lines.append(f"- **Average Significance:** {avg_sig:.3f}")
+                summary_lines.append(f"- **Agents with Memories:** {agents_with_memories}")
+                summary_lines.append("")
+            
+            # Failure Adaptation
+            failure = analysis.get('failure_adaptation', {})
+            if failure:
+                summary_lines.append("### Failure Adaptation")
+                summary_lines.append("")
+                adaptations = failure.get('total_failure_adaptations', 0)
+                agents_adapting = failure.get('agents_with_adaptations', 0)
+                summary_lines.append(f"- **Total Adaptations:** {adaptations}")
+                summary_lines.append(f"- **Agents Adapting:** {agents_adapting}")
+                
+                common = failure.get('common_adaptations', {})
+                if common:
+                    top_adaptations = list(common.keys())[:3]
+                    summary_lines.append(f"- **Common Responses:** {', '.join(top_adaptations)}")
+                summary_lines.append("")
+            
+            # Consciousness Evolution
+            consciousness = analysis.get('consciousness_evolution', {})
+            if consciousness:
+                summary_lines.append("### Consciousness Evolution")
+                summary_lines.append("")
+                trajectories = consciousness.get('trajectories_analyzed', 0)
+                avg_freq_change = consciousness.get('average_frequency_change', 0)
+                avg_coh_change = consciousness.get('average_coherence_change', 0)
+                summary_lines.append(f"- **Trajectories Analyzed:** {trajectories}")
+                summary_lines.append(f"- **Avg Frequency Change:** {avg_freq_change:+.2f} Hz")
+                summary_lines.append(f"- **Avg Coherence Change:** {avg_coh_change:+.3f}")
+                summary_lines.append("")
+        
+        # Key Insights
+        summary_lines.append("## Key Insights")
+        summary_lines.append("")
+        
+        # Performance insights
+        if perf_comp:
+            best_scenario = max(perf_comp.items(), key=lambda x: x[1]['completion_rate'])
+            summary_lines.append(f"- **Best Performance:** {best_scenario[0].replace('_', ' ').title()} ({best_scenario[1]['completion_rate']:.1%} success)")
+            
+            if len(perf_comp) > 1:
+                rates = [m['completion_rate'] for m in perf_comp.values()]
+                improvement = max(rates) - min(rates)
+                summary_lines.append(f"- **Performance Range:** {improvement:.1%} difference between scenarios")
+        
+        # Learning insights
+        if learning and learning.get('time_improvement_pct', 0) != 0:
+            improvement = learning['time_improvement_pct']
+            direction = "improvement" if improvement > 0 else "decline"
+            summary_lines.append(f"- **Learning Effect:** {abs(improvement):.1f}% {direction} across solo runs")
+        
+        # Memory insights
+        if memory and memory.get('total_memories_formed', 0) > 0:
+            summary_lines.append(f"- **Memory Formation:** {memory['total_memories_formed']} memories formed with avg significance {memory['average_significance']:.3f}")
+        
+        # Adaptation insights
+        if failure and failure.get('agents_with_adaptations', 0) > 0:
+            summary_lines.append(f"- **Adaptive Behavior:** {failure['agents_with_adaptations']} agents showed failure adaptation patterns")
+        
+        summary_lines.append("")
+        summary_lines.append("---")
+        summary_lines.append("*Generated by UBF Test Framework*")
+        
+        # Write to file
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write('\n'.join(summary_lines))
+        
+        print(f"Summary document saved to {filepath}")
+        return '\n'.join(summary_lines)
+    
     def load_results(self, filepath: str):
         """Load results from JSON file."""
         with open(filepath, 'r') as f:
@@ -532,7 +720,8 @@ class UBFTestScenarios:
 
 # Utility function to run quick test
 def run_ubf_test(maze_size: Tuple[int, int] = (10, 10), max_steps: int = 500, 
-                 random_seed: int = None, save_file: str = None) -> Dict[str, Any]:
+                 random_seed: int = None, save_file: str = None, 
+                 generate_summary: bool = True) -> Dict[str, Any]:
     """
     Quick function to run all UBF test scenarios.
     
@@ -541,6 +730,7 @@ def run_ubf_test(maze_size: Tuple[int, int] = (10, 10), max_steps: int = 500,
         max_steps: Maximum steps per simulation
         random_seed: Random seed for reproducibility  
         save_file: Optional file to save results
+        generate_summary: Whether to generate a summary document
         
     Returns:
         Complete test results
@@ -550,5 +740,9 @@ def run_ubf_test(maze_size: Tuple[int, int] = (10, 10), max_steps: int = 500,
     
     if save_file:
         test_runner.save_results(save_file)
+    
+    if generate_summary:
+        summary_file = save_file.replace('.json', '_summary.md') if save_file else None
+        test_runner.generate_summary_document(summary_file)
     
     return results

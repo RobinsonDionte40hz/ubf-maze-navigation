@@ -515,6 +515,9 @@ class MazeEnvironment:
             # Agent selects action
             selected_action, decision_breakdown = agent.select_action(env_context)
             
+            # Set the last action so process_outcome can reference it
+            agent.last_action = selected_action
+            
             # Execute action in environment
             action_result = self.execute_agent_action(agent, selected_action.action_type)
             

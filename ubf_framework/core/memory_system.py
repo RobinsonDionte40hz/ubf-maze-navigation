@@ -169,7 +169,9 @@ class MemoryManager:
         Returns:
             Significance score 0.0-1.0
         """
-        emotional_component = abs(event_data.get('emotional_impact', 0.0)) * 0.4
+        emotional_impact = event_data.get('emotional_impact', 0.0)
+        
+        emotional_component = abs(emotional_impact) * 0.4
         goal_component = context.goal_relevance * 0.3
         novelty_component = context.novelty_factor * 0.2
         social_component = context.social_importance * 0.1
@@ -182,7 +184,8 @@ class MemoryManager:
     
     def should_form_memory(self, significance: float) -> bool:
         """Check if event is significant enough to store as memory."""
-        return significance >= self.MIN_SIGNIFICANCE_THRESHOLD
+        threshold = self.MIN_SIGNIFICANCE_THRESHOLD
+        return significance >= threshold
     
     def create_memory(self, event_data: Dict[str, Any], context: MemoryContext) -> Optional[Memory]:
         """

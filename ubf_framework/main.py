@@ -225,7 +225,7 @@ def demonstrate_consciousness_coordinates():
         weights = []
         
         for action in actions:
-            weight = agent.decision_system.calculate_interaction_weight(
+            weight, factors = agent.decision_system.calculate_interaction_weight(
                 consciousness=agent.consciousness,
                 behavioral_state=agent.behavioral_state,
                 memory_manager=agent.memory_manager,
